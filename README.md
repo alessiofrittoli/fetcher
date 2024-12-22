@@ -84,6 +84,16 @@ pnpm test:jest
 pnpm test:jest:jsdom
 ```
 
+Run tests with coverage.
+
+An HTTP server is then started to serve coverage files from `./coverage` folder.
+
+⚠️ You may see a blank page the first time you run this command. Simply refresh the browser to see the updates.
+
+```bash
+pnpm test:coverage
+```
+
 ---
 
 ### Contributing

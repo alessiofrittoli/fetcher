@@ -1,6 +1,7 @@
 /src
 /__tests__
 /docs
+/coverage
 
 /node_modules
 /.git
