@@ -1,7 +1,7 @@
 {
 	"name": "@alessiofrittoli/fetcher",
 	"version": "0.1.0",
-	"description": "Typescript fetch/ajax utilities",
+	"description": "Typescript fetch/xhr utilities",
 	"author": {
 		"name": "Alessio Frittoli",
 		"email": "info@alessiofrittoli.it",
@@ -78,13 +78,13 @@
 		"//3b": "************************ UNIT TESTS COVERAGE ************************",
 		"//3c": "*********************************************************************",
 		"test:coverage": "pnpm test:watch --coverage",
-		"test:ci:coverage": "pnpm test:ci --coverage",
+		"test:coverage:ci": "pnpm test:ci --coverage",
 		"test:serve-coverage": "http-server ./coverage/lcov-report --gzip true -p 0 -o --silent",
 		"test:coverage:serve": "concurrently --prefix none --kill-others \"pnpm test:coverage\" \"pnpm test:serve-coverage\"",
 		"//4a": "*********************************************************************",
 		"//4b": "************************ TARGETED UNIT TESTS ************************",
 		"//4c": "*********************************************************************",
-		"test:jest": "pnpm test:watch jest.test.ts"
+		"test:fetch": "pnpm test:watch fetch.test.ts"
 	},
 	"devDependencies": {
 		"@alessiofrittoli/crypto-buffer": "^3.5.0",
