@@ -1,8 +1,15 @@
 import type Emitter from '@alessiofrittoli/event-emitter'
 import type { Exception } from '@alessiofrittoli/exception'
+import type { AbortError } from '@alessiofrittoli/exception/abort'
 import type { UrlInput } from '@alessiofrittoli/url-utils'
+import type { AbortController } from '@alessiofrittoli/abort-controller'
+
 import type { ErrorCode } from '@/error'
 import type { Xhr } from '@/xhr'
+
+
+export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD'
+
 
 export namespace Fetch
 {
@@ -41,14 +48,17 @@ export namespace XHR
 {
 	export namespace Event
 	{
+		export type Progress = keyof XMLHttpRequestEventTargetEventMap
+
 		export type Map<TReturn = unknown> = {
 			init	: [ xhr: Xhr<TReturn> ]
 			send	: [ xhr: Xhr<TReturn> ]
 			success	: [ response: TReturn, xhr: Xhr<TReturn> ]
 			error	: [ error: Exception<string, ErrorCode>, xhr: Xhr<TReturn> ]
+			abort	: [ reason: AbortError<string, ErrorCode>, event: ProgressEvent<XMLHttpRequestEventTarget>, xhr: Xhr<TReturn> ]
 			readystatechange: [ event: Event, xhr: Xhr<TReturn> ]
 		} & {
-			[ event in Exclude<XHR.ProgressEventType, 'error'> ]: [ event: ProgressEvent<XMLHttpRequestEventTarget>, xhr: Xhr<TReturn> ]
+			[ event in Exclude<XHR.Event.Progress, 'abort' | 'error'> ]: [ event: ProgressEvent<XMLHttpRequestEventTarget>, xhr: Xhr<TReturn> ]
 		}
 
 		export type Listener<TEvent extends keyof XHR.Event.Map<TReturn>, TReturn = unknown> = (
@@ -56,10 +66,17 @@ export namespace XHR
 		)
 	}
 
-	export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD'
-	export type ProgressEventType = keyof XMLHttpRequestEventTargetEventMap
+	
+	export interface InitOptions
+	{
+		/**
+		 * A custom controller object that allows you to abort one or more DOM requests as and when desired.
+		 */
+		controller?: AbortController<ErrorCode>
+	}
 
-	export interface Options
+
+	export interface Options extends XHR.InitOptions
 	{
 		/** The URL string or URL object. */
 		url: UrlInput
@@ -92,9 +109,7 @@ export namespace XHR
 		 * 
 		 * When set: throws an "InvalidAccessError" DOMException if the synchronous flag is set and current global object is a Window object.
 		 */
-		requestTimeout?: XMLHttpRequest[ 'timeout' ]
-		/** An AbortSignal to set request's signal. */
-		signal?: AbortSignal
+		timeout?: XMLHttpRequest[ 'timeout' ]
 		/** Whether to `console.log` data on different events. */
 		debug?: boolean
 	}

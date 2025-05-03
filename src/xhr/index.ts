@@ -1,6 +1,8 @@
 import { Url } from '@alessiofrittoli/url-utils'
 import { EventEmitter } from '@alessiofrittoli/event-emitter'
 import { Exception } from '@alessiofrittoli/exception'
+import type { AbortErrorOptions } from '@alessiofrittoli/exception/abort'
+import { AbortController } from '@alessiofrittoli/abort-controller'
 import { ErrorCode } from '@/error'
 import type { XHR } from '@/types'
 
@@ -19,6 +21,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	headers
 	credentials
 	response?: TReturn
+	controller
 	debug
 
 	/** Indicates whether to automatically set the XHR response type based on the Response Content-Type Header. */
@@ -32,7 +35,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 
 	/** XHR progress events. */
-	static readonly ProgressEvents: XHR.ProgressEventType[] = [
+	static readonly ProgressEvents: XHR.Event.Progress[] = [
 		'abort', 'timeout', 'error',
 		'loadstart', 'progress',
 		'load', 'loadend'
@@ -63,25 +66,18 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 			if ( typeof options.withCredentials !== 'undefined' ) {
 				this.request.withCredentials = options.withCredentials
 			}
-			if ( options.requestTimeout ) {
-				this.request.timeout = options.requestTimeout
+			if ( options.timeout ) {
+				this.request.timeout = options.timeout
 			}
 		}
 
 		this.url			= options.url
 		this.method			= options.method || 'GET'
 		this.body			= options.body
+		this.controller		= options.controller || new AbortController()
 		this.headers		= new Headers( options.headers )
 		this.credentials	= options.credentials
 		this.debug			= options.debug || false
-
-		if ( options.signal ) {
-			const abortListener = () => {
-				this.abort()
-				options.signal?.removeEventListener( 'abort', abortListener )
-			}
-			options.signal.addEventListener( 'abort', abortListener )
-		}
 	}
 
 
@@ -90,15 +86,25 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	 *
 	 * @returns The current `Xhr` instance for chaining purposes.
 	 */
-	init()
+	init( options: XHR.InitOptions = {} )
 	{
-
 		if ( ! this.request ) {
 			return this.error( Xhr.NotAvailableErr )
 		}
 
+		if ( options.controller ) {
+			this.controller = options.controller
+		}
+		
+		if ( this.controller.signal.aborted ) {
+			/**
+			 * create a new instance of `AbortController` if `Xhr.init()` get called again after aborting the request.
+			 */
+			this.controller = options.controller || new AbortController()
+		}
+
 		this.emit( 'init', this )
-		this.addListeners()
+		this.addProgressListeners()
 		this.request.open(
 			this.method,
 			Url.format( this.url ),
@@ -107,10 +113,11 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 			this.credentials?.password
 		)
 		this.setHeaders()
-
+				
 		this.request.removeEventListener( 'readystatechange', this.readyStateChangeHandler )
 		this.request.addEventListener( 'readystatechange', this.readyStateChangeHandler )
 		this.once( 'loadend', this.loadEndHandler )
+		this.controller.signal.addEventListener( 'abort', this.controllerAbortListener )
 
 		return this
 	}
@@ -128,15 +135,26 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 		}
 
 		try {
-			await this.request.send( this.body )
+						
 			this.emit( 'send', this )
+			await this.request.send( this.body )
 			return this
+
 		} catch ( err ) {
-			const error = err as Error
-			return this.error( new Exception( error.message, {
-				code	: ErrorCode.Exception.UNKNOWN,
-				cause	: error,
-			} ) )
+
+			const cause	= err as Error
+			const code	= (
+				cause.name === 'InvalidStateError'
+					? ErrorCode.Request.XHR_INVALID_STATE
+					: ErrorCode.Exception.UNKNOWN
+			)
+
+			return (
+				this.error(
+					new Exception( cause.message, { code, name: cause.name, cause, } )
+				)
+			)
+
 		}
     }
 
@@ -146,15 +164,26 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	 * 
 	 * @returns The current `Xhr` instance for chaining purposes.
 	 */
-	abort()
+	abort( reason?: string, options?: AbortErrorOptions )
 	{
 		if ( ! this.request ) {
 			return this.error( Xhr.NotAvailableErr )
 		}
+
+		this.controller.abort( reason, options )
 		
-		this.request.abort()
-		this.log( { message: 'The user aborted the request' } )
 		return this
+	}
+
+
+	/**
+	 * Executed when `Xhr.controller` get aborted through `Xhr.abort()` or `Xhr.controller.abort()` methods.
+	 * 
+	 */
+	private controllerAbortListener = () => {
+		this.controller.signal.removeEventListener( 'abort', this.controllerAbortListener )
+		this.request.abort()
+		this.log( { message: this.controller.signal.reason.message } )
 	}
 
 
@@ -189,6 +218,11 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 		const eventType = event.type
 		this.log( { event: eventType, message: `${ event.loaded } bytes transferred.` } )
+		
+		if ( eventType === 'abort' ) {
+			this.emit( 'abort', this.controller.signal.reason, event, this )
+			return this
+		}
 
 		if ( eventType === 'error' ) {
 			return this.error(
@@ -270,7 +304,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	 * 
 	 * @returns The current `Xhr` instance for chaining purposes.
 	 */
-	private addListeners()
+	private addProgressListeners()
 	{
 		if ( ! this.request ) {
 			return this.error( Xhr.NotAvailableErr )
