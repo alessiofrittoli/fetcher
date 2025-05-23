@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@alessiofrittoli/abort-controller':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@alessiofrittoli/chain-functions':
         specifier: ^2.3.0
         version: 2.3.0
@@ -26,6 +29,9 @@ importers:
       '@alessiofrittoli/url-utils':
         specifier: ^3.4.0
         version: 3.4.0
+      '@alessiofrittoli/web-utils':
+        specifier: ^1.11.0
+        version: 1.11.0
     devDependencies:
       '@alessiofrittoli/crypto-buffer':
         specifier: ^3.6.0
@@ -81,17 +87,26 @@ importers:
 
 packages:
 
+  '@alessiofrittoli/abort-controller@0.1.0':
+    resolution: {integrity: sha512-bVx5XvRT33AOqFI7yvelOEsIVrs6myMzQYQujCjAX5DDRYOA0P9YuR/dVSZmxDLOs5ZKzD4z/6+zKJt1imvtEw==}
+
   '@alessiofrittoli/chain-functions@2.3.0':
     resolution: {integrity: sha512-kbOhe6q9jlNLpe93KDSFxh0atsw3fa9Hi6VlA2OnzA28Te6iBw7ZkwFT5FTwBx2vtlBHY9fa8t5UtTMkBR8Flg==}
 
   '@alessiofrittoli/crypto-buffer@3.6.0':
     resolution: {integrity: sha512-GW04ywhpZn0X2yg32AqU21ZYJVFcTOlx3fZseWepHSED6aWm98Hk4O3lhaCTVgwrHOggyJTgLC4GBvpwJcxPRQ==}
 
+  '@alessiofrittoli/date-utils@3.2.0':
+    resolution: {integrity: sha512-ZF12qeAtxG6akKZjFT3tVIKZOuBO4XRaYYWhibL7IDSotTgM0KlfPUs8ROk1QdiStknfaQCptv7zmGpJFPFvZQ==}
+
   '@alessiofrittoli/event-emitter@1.4.0':
     resolution: {integrity: sha512-dkUsRk6h4k4UAKbPFpXGwB4n/fs+9wVxMCMyf1EU4P1wfqqZXiBmYuuV/GMtTn7qlhIVs+mQHa2jjEN6lHXPbw==}
 
   '@alessiofrittoli/exception@3.2.0':
     resolution: {integrity: sha512-YwkeQTXrIo1Iy1yA0htonNmiTC1CUL324dlC3GIKhulmWzTDjqZVXT8tBsBjhvdGLkCxj4MMvkdg/Oa9ucOspg==}
+
+  '@alessiofrittoli/math-utils@1.13.0':
+    resolution: {integrity: sha512-3sSEZJWdT/BpjFx9YEL2f/bj+Hy0gv5Y7E0KNAGVvsXgwCehkuswb8FAifMo8mMuOH7MQLfIqfFNnTReG8NZOw==}
 
   '@alessiofrittoli/node-scripts@2.5.0':
     resolution: {integrity: sha512-K6o0ZJgWb8HAbiBU7ajdlNY8UsrAlcLHO2WAx9pPoxjLKC/QR/PnNE+zLgc+z1q4TefS2UsS1VsUAUjQI/Ro4g==}
@@ -104,6 +119,9 @@ packages:
 
   '@alessiofrittoli/url-utils@3.4.0':
     resolution: {integrity: sha512-fBtD+QwSI2ZisPTCMxWL6iRN2bftOdpwTaDABBqqdrk9NMmAqF3WIe92oTm61f80dcdg+in8l0THJuRLeCMv4A==}
+
+  '@alessiofrittoli/web-utils@1.11.0':
+    resolution: {integrity: sha512-L/NSN2BVwaOUlvhFhku/VMMaLW+JQtTHzzKwZNQoNUCKJHo8eUChNEbL9eUiqsdVvA++iC0n5u7jzQ16NfTq9g==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -2520,13 +2538,26 @@ packages:
 
 snapshots:
 
+  '@alessiofrittoli/abort-controller@0.1.0':
+    dependencies:
+      '@alessiofrittoli/exception': 3.2.0
+
   '@alessiofrittoli/chain-functions@2.3.0': {}
 
   '@alessiofrittoli/crypto-buffer@3.6.0': {}
 
+  '@alessiofrittoli/date-utils@3.2.0':
+    dependencies:
+      '@alessiofrittoli/math-utils': 1.13.0
+      '@alessiofrittoli/type-utils': 1.8.0
+
   '@alessiofrittoli/event-emitter@1.4.0': {}
 
   '@alessiofrittoli/exception@3.2.0': {}
+
+  '@alessiofrittoli/math-utils@1.13.0':
+    dependencies:
+      '@alessiofrittoli/web-utils': 1.11.0
 
   '@alessiofrittoli/node-scripts@2.5.0': {}
 
@@ -2538,6 +2569,13 @@ snapshots:
       '@alessiofrittoli/node-scripts': 2.5.0
 
   '@alessiofrittoli/url-utils@3.4.0': {}
+
+  '@alessiofrittoli/web-utils@1.11.0':
+    dependencies:
+      '@alessiofrittoli/date-utils': 3.2.0
+      '@alessiofrittoli/math-utils': 1.13.0
+      '@alessiofrittoli/type-utils': 1.8.0
+      '@alessiofrittoli/url-utils': 3.4.0
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -3301,7 +3339,7 @@ snapshots:
       fast-glob: 3.3.2
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.1
+      semver: 7.7.2
       ts-api-utils: 2.1.0(typescript@5.8.3)
       typescript: 5.8.3
     transitivePeerDependencies:

@@ -1,6 +1,14 @@
 import { Exception } from '@alessiofrittoli/exception'
+import type { AbortSignal } from '@alessiofrittoli/abort-controller'
+
 import { ErrorCode } from '@/error'
 import type { Fetch } from '@/types'
+
+
+interface RequestInit extends globalThis.RequestInit
+{
+	signal?: AbortSignal
+}
 
 
 /**
