@@ -7,7 +7,6 @@ import tseslint from 'typescript-eslint'
  * 
  * @type {import('eslint').Linter.Config[]}
  */
-// @ts-expect-error `languageOptions` property in `tseslint.configs.recommended` result incompatible with `eslint` config types.
 const tseslintReccommended = tseslint.configs.recommended
 
 /** @type {import('eslint').Linter.Config[]} */
