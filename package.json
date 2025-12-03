@@ -16,7 +16,8 @@
 	],
 	"keywords": [
 		"fetch",
-		"ajax"
+		"ajax",
+		"ping"
 	],
 	"homepage": "https://github.com/alessiofrittoli/fetcher#readme",
 	"bugs": {
