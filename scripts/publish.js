@@ -1,2 +1,2 @@
-require( '@alessiofrittoli/node-scripts/publish' )
-	.publish()
+require( '@alessiofrittoli/node-scripts/release' )
+	.release()
