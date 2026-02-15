@@ -125,7 +125,7 @@
 		"test:fetch": "pnpm test:watch fetch.test.ts"
 	},
 	"devDependencies": {
-		"@alessiofrittoli/crypto-buffer": "^3.10.0",
+		"@alessiofrittoli/crypto-buffer": "^3.11.0",
 		"@eslint/js": "^10.0.1",
 		"@jest/globals": "^30.2.0",
 		"@types/jest": "^30.0.0",
