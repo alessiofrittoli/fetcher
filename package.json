@@ -2,6 +2,7 @@
 	"name": "@alessiofrittoli/fetcher",
 	"version": "1.1.0",
 	"description": "Typescript fetch/xhr utilities",
+	"type": "module",
 	"author": {
 		"name": "Alessio Frittoli",
 		"email": "info@alessiofrittoli.it",
@@ -28,12 +29,15 @@
 		"type": "git",
 		"url": "git+https://github.com/alessiofrittoli/fetcher.git"
 	},
-	"main": "./dist/index.js",
+	"engines": {
+		"node": ">=24.15.0",
+		"pnpm": ">=11.27.1"
+	},
+	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
+	"types": "./dist/index.d.mts",
 	"files": [
-		"dist",
-		"scripts/postinstall"
+		"dist"
 	],
 	"exports": {
 		".": {
@@ -42,56 +46,18 @@
 				"default": "./dist/index.mjs"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
 			}
 		},
-		"./fetch": {
+		"./*": {
 			"import": {
-				"types": "./dist/fetch.d.mts",
-				"default": "./dist/fetch.mjs"
+				"types": "./dist/*/index.d.mts",
+				"default": "./dist/*/index.mjs"
 			},
 			"require": {
-				"types": "./dist/fetch.d.ts",
-				"default": "./dist/fetch.js"
-			}
-		},
-		"./ping": {
-			"import": {
-				"types": "./dist/ping.d.mts",
-				"default": "./dist/ping.mjs"
-			},
-			"require": {
-				"types": "./dist/ping.d.ts",
-				"default": "./dist/ping.js"
-			}
-		},
-		"./xhr": {
-			"import": {
-				"types": "./dist/xhr/index.d.mts",
-				"default": "./dist/xhr/index.mjs"
-			},
-			"require": {
-				"types": "./dist/xhr/index.d.ts",
-				"default": "./dist/xhr/index.js"
-			}
-		},
-		"./error": {
-			"import": {
-				"types": "./dist/error.d.mts",
-				"default": "./dist/error.mjs"
-			},
-			"require": {
-				"types": "./dist/error.d.ts",
-				"default": "./dist/error.js"
-			}
-		},
-		"./types": {
-			"import": {
-				"types": "./dist/types.d.mts"
-			},
-			"require": {
-				"types": "./dist/types.d.ts"
+				"types": "./dist/*/index.d.cts",
+				"default": "./dist/*/index.cjs"
 			}
 		}
 	},
@@ -100,58 +66,59 @@
 		"//1a": "*********************************************************************",
 		"//1b": "******************** DEV - BUILD - LINT - RELEASE *******************",
 		"//1c": "*********************************************************************",
-		"dev": "cross-env NODE_ENV=development tsup --watch",
-		"build:prod": "cross-env NODE_ENV=production tsup",
-		"build": "pnpm lint && pnpm test:ci && pnpm build:prod",
-		"lint": "eslint",
-		"postinstall": "node scripts/postinstall/index.js",
-		"release": "node scripts/release.js --verbose --npm",
+		"dev": "tsdown --watch",
+		"build": "pnpm lint && pnpm tsc && pnpm tsdown",
+		"lint": "oxlint --report-unused-disable-directives --max-warnings 0",
+		"release": "node scripts/release.ts --verbose --npm",
 		"//2a": "*********************************************************************",
 		"//2b": "***************************** UNIT TESTS ****************************",
 		"//2c": "*********************************************************************",
-		"test": "jest --verbose",
-		"test:watch": "jest --watchAll --verbose",
-		"test:ci": "jest --ci --verbose",
+		"test": "vitest --reporter=tree",
+		"test:watch": "pnpm test watch",
+		"test:ci": "pnpm test run",
 		"//3a": "*********************************************************************",
 		"//3b": "************************ UNIT TESTS COVERAGE ************************",
 		"//3c": "*********************************************************************",
 		"test:coverage": "pnpm test:watch --coverage",
 		"test:coverage:ci": "pnpm test:ci --coverage",
-		"test:serve-coverage": "http-server ./coverage/lcov-report --gzip true -p 0 -o --silent",
+		"test:serve-coverage": "http-server ./coverage --gzip true -p 0 -o /index.html --silent",
 		"test:coverage:serve": "concurrently --prefix none --kill-others \"pnpm test:coverage\" \"pnpm test:serve-coverage\"",
 		"//4a": "*********************************************************************",
-		"//4b": "************************ TARGETED UNIT TESTS ************************",
+		"//4b": "******************************* OTHER *******************************",
 		"//4c": "*********************************************************************",
-		"test:fetch": "pnpm test:watch fetch.test.ts"
+		"postinstall": "node scripts/postinstall/index.cjs"
+	},
+	"peerDependencies": {
+		"@alessiofrittoli/abort-controller": "^1.0.0",
+		"@alessiofrittoli/chain-functions": "^2.7.0",
+		"@alessiofrittoli/event-emitter": "^1.7.0",
+		"@alessiofrittoli/exception": "^4.1.0",
+		"@alessiofrittoli/node-scripts": "^3.3.0",
+		"@alessiofrittoli/type-utils": "^2.0.0",
+		"@alessiofrittoli/url-utils": "^4.1.0",
+		"@alessiofrittoli/web-utils": "^2.4.0"
 	},
 	"devDependencies": {
+		"@alessiofrittoli/abort-controller": "^1.0.0",
+		"@alessiofrittoli/chain-functions": "^2.7.0",
 		"@alessiofrittoli/crypto-buffer": "^3.11.0",
-		"@eslint/js": "^10.0.1",
-		"@jest/globals": "^30.2.0",
-		"@types/jest": "^30.0.0",
-		"@types/node": "^25.2.3",
-		"concurrently": "^9.2.1",
-		"cross-env": "^10.1.0",
-		"dotenv": "^17.3.1",
-		"eslint": "^10.0.0",
-		"globals": "^17.3.0",
+		"@alessiofrittoli/event-emitter": "^1.7.0",
+		"@alessiofrittoli/exception": "^4.1.0",
+		"@alessiofrittoli/node-scripts": "^4.1.0",
+		"@alessiofrittoli/package-configs": "^1.6.0",
+		"@alessiofrittoli/type-utils": "^2.0.0",
+		"@alessiofrittoli/url-utils": "^4.1.0",
+		"@alessiofrittoli/web-utils": "^2.4.0",
+		"@types/node": "^24.19.1",
+		"@vitest/coverage-v8": "^5.0.5",
+		"concurrently": "^10.0.6",
 		"http-server": "^14.1.1",
-		"jest": "^30.2.0",
-		"jest-environment-jsdom": "^30.2.0",
-		"ts-jest": "^29.4.6",
-		"ts-node": "^10.9.2",
-		"tsup": "^8.5.1",
-		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.55.0"
-	},
-	"dependencies": {
-		"@alessiofrittoli/abort-controller": "^0.1.0",
-		"@alessiofrittoli/chain-functions": "^2.5.0",
-		"@alessiofrittoli/event-emitter": "^1.6.0",
-		"@alessiofrittoli/exception": "^3.5.0",
-		"@alessiofrittoli/node-scripts": "^3.3.0",
-		"@alessiofrittoli/type-utils": "^1.9.0",
-		"@alessiofrittoli/url-utils": "^3.7.1",
-		"@alessiofrittoli/web-utils": "^1.20.0"
+		"oxlint": "^1.88.0",
+		"prettier": "^3.9.10",
+		"prettier-plugin-sort-imports": "^1.8.11",
+		"tsdown": "^0.23.1",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.4",
+		"vitest": "^5.0.5"
 	}
 }

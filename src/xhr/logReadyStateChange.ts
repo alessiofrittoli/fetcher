@@ -2,19 +2,18 @@ import type { Xhr } from '.'
 
 /**
  * Log `readystatechange` events.
- * 
+ *
  * @param xhr The Xhr instance.
  */
-export const logReadyStateChange = ( xhr: Xhr ) => {
-
+export const logReadyStateChange = (xhr: Xhr): void => {
 	const logData = {
-		event		: 'readystatechange',
-		readyState	: xhr.request.readyState,
-		status		: xhr.request.status,
-		message		: '',
+		event: 'readystatechange',
+		readyState: xhr.request.readyState,
+		status: xhr.request.status,
+		message: '',
 	}
 
-	switch ( xhr.request.readyState ) {
+	switch (xhr.request.readyState) {
 		case XMLHttpRequest.UNSENT:
 			logData.message = 'Request unsent'
 			break
@@ -32,5 +31,5 @@ export const logReadyStateChange = ( xhr: Xhr ) => {
 			break
 	}
 
-	xhr.log( logData )
+	xhr.log(logData)
 }
