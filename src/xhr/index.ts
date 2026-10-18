@@ -156,11 +156,11 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	]
 
 	private static MapReadyStateToXhrEvent: Record<XHR.ReadyState, XHR.Event.ReadyStateChange> = {
-		[0]: 'unsent',
-		[1]: 'opened',
-		[2]: 'headers',
-		[3]: 'loading',
-		[4]: 'done',
+		0: 'unsent',
+		1: 'opened',
+		2: 'headers',
+		3: 'loading',
+		4: 'done',
 	}
 
 	/**
