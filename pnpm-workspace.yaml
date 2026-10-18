@@ -1,6 +1,7 @@
 allowBuilds:
   '@alessiofrittoli/fetcher': false
-  '@alessiofrittoli/type-utils': true
+  # FIXME: set this back to `true` when there is no one more using older version of `@alessiofrittoli/type-utils`
+  '@alessiofrittoli/type-utils': false
   esbuild: true
 minimumReleaseAgeExclude:
   - '@alessiofrittoli/*'

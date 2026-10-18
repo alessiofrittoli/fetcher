@@ -1,4 +1,3 @@
 {
-	"extends": "./tsconfig.build.json",
-	"include": ["**/*.ts", "alessiofrittoli-env.d.ts"]
+	"extends": "./tsconfig.build.json"
 }
