@@ -23,6 +23,9 @@ importers:
       '@alessiofrittoli/exception':
         specifier: ^4.1.0
         version: 4.1.0
+      '@alessiofrittoli/math-utils':
+        specifier: ^2.1.0
+        version: 2.1.0(@alessiofrittoli/web-utils@2.4.0)
       '@alessiofrittoli/node-scripts':
         specifier: ^4.1.0
         version: 4.1.0(@alessiofrittoli/abort-controller@1.0.0(@alessiofrittoli/exception@4.1.0))(@alessiofrittoli/exception@4.1.0)(@alessiofrittoli/package-configs@1.6.0(@eslint/js@10.0.1(eslint@10.0.0(supports-color@10.2.2)))(eslint@10.0.0(supports-color@10.2.2))(oxlint@1.88.0)(prettier-plugin-sort-imports@1.8.11(typescript@6.0.3))(prettier@3.9.10)(tsdown@0.23.1(typescript@6.0.3))(typescript@6.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.27.0))(vitest@5.0.5))(@alessiofrittoli/web-utils@2.4.0)
