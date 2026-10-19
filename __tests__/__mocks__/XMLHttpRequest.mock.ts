@@ -1,4 +1,5 @@
 import { EventEmitter } from '@alessiofrittoli/event-emitter'
+import { ExceptionName } from '@alessiofrittoli/exception'
 import type { XHR } from '@/types'
 import { vi } from 'vitest'
 
@@ -9,6 +10,8 @@ export class XMLHttpRequest extends EventEmitter {
 	public readyState: number
 	public responseURL: string
 	public status: number
+	private isAborted: boolean
+	private locked: boolean
 
 	public static readonly UNSENT = 0
 	public static readonly OPENED = 1
@@ -20,9 +23,11 @@ export class XMLHttpRequest extends EventEmitter {
 		super()
 
 		this.method = 'GET'
-		this.readyState = 0
+		this.readyState = XMLHttpRequest.UNSENT
 		this.responseURL = ''
 		this.status = 200
+		this.isAborted = false
+		this.locked = false
 	}
 
 	public open = vi.fn((...args: Parameters<OriginalXMLHttpRequest['open']>) => {
@@ -39,53 +44,66 @@ export class XMLHttpRequest extends EventEmitter {
 
 		this.responseURL = responseUrl.toString()
 		this.readyState = XMLHttpRequest.OPENED
+		this.locked = !this.locked
 	})
 
-	public send = vi.fn(async () => {
-		if (this.readyState !== XMLHttpRequest.OPENED) {
+	public send = vi.fn(() => {
+		if (!this.locked || this.readyState !== XMLHttpRequest.OPENED) {
 			this.readyState = XMLHttpRequest.UNSENT
 			throw new DOMException(
 				"Failed to execute 'send' on 'XMLHttpRequest': The object's state must be OPENED.",
-				'InvalidStateError',
+				ExceptionName.InvalidStateError,
 			)
 		}
 
+		this.locked = false
+
 		this.dispatchEvent(new ProgressEvent('loadstart'))
 
-		// // simulate server response timings
-		// await new Promise(resolve => {
-		// 	setTimeout(resolve, 1000)
-		// 	vi.advanceTimersToNextTimer()
-		// })
-		this.readyState = XMLHttpRequest.HEADERS_RECEIVED
-		this.dispatchEvent(new Event('readystatechange'))
+		const step1 = new Promise(resolve => setTimeout(resolve, 1000))
+		const step2 = new Promise(resolve => setTimeout(resolve, 1000))
+		const step3 = new Promise(resolve => setTimeout(resolve, 1000))
 
-		// // simulate server response timings
-		// await new Promise(resolve => {
-		// 	setTimeout(resolve, 1000)
-		// 	vi.advanceTimersToNextTimer()
-		// })
-		this.readyState = XMLHttpRequest.LOADING
-		this.dispatchEvent(new Event('readystatechange'))
+		const emitEvents = async (): Promise<void> => {
+			// simulate server response timings
+			await step1
 
-		// // simulate server response timings
-		// await new Promise(resolve => {
-		// 	setTimeout(resolve, 1000)
-		// 	vi.advanceTimersToNextTimer()
-		// })
-		this.readyState = XMLHttpRequest.DONE
-		this.dispatchEvent(new Event('readystatechange'))
+			if (!this.isAborted) {
+				this.readyState = XMLHttpRequest.HEADERS_RECEIVED
+				this.dispatchEvent(new Event('readystatechange'))
+				// simulate server response timings
+				await step2
+			}
 
-		this.dispatchEvent(new ProgressEvent('load'))
-		this.dispatchEvent(new ProgressEvent('loadend'))
+			if (!this.isAborted) {
+				this.readyState = XMLHttpRequest.LOADING
+				this.dispatchEvent(new Event('readystatechange'))
+				// simulate server response timings
+				await step3
+			}
 
-		this.readyState = XMLHttpRequest.UNSENT
+			this.readyState = XMLHttpRequest.DONE
+			this.dispatchEvent(new Event('readystatechange'))
+
+			if (!this.isAborted) {
+				this.dispatchEvent(new ProgressEvent('load'))
+			}
+
+			if (this.isAborted) {
+				this.dispatchEvent(new ProgressEvent('abort'))
+			}
+
+			this.dispatchEvent(new ProgressEvent('loadend'))
+
+			this.readyState = XMLHttpRequest.UNSENT
+		}
+
+		emitEvents()
 	})
 
 	public abort = vi.fn(() => {
 		this.status = 0
-		this.readyState = XMLHttpRequest.UNSENT
-		this.dispatchEvent(new ProgressEvent('abort'))
+		this.isAborted = true
 	})
 
 	public addEventListener = vi.fn((...args: [event: string, fn: () => void]) => {

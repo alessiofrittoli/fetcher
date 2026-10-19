@@ -255,12 +255,10 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 		const { body } = options
 
+		// send request in this scheduled task so anyone chained to `.send()` can listen events.
 		try {
-			// send request in this scheduled task so anyone chained to `.send()` can listen events.
-			setTimeout(() => {
-				this.emit('send', this)
-				this.request.send(body)
-			})
+			this.emit('send', this)
+			this.request.send(body)
 			return this as Xhr<T>
 		} catch (err) {
 			const cause = err as Error
@@ -271,9 +269,19 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 					: ErrorCode.UNKNOWN
 
 			return this.error<T>(
-				new Exception({ ...cause, name: cause.name, message: cause.message, code, cause }),
+				new Exception({
+					...cause,
+					name: cause.name,
+					message: cause.message,
+					code,
+					cause,
+					isCritical: true,
+				}),
 			)
 		}
+		// setTimeout(async () => {
+		// })
+		// return this as Xhr<T>
 	}
 
 	/**
@@ -457,6 +465,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 		this.log(
 			{
+				method: '.setResponseTypeFromResponseHeaders()',
 				contentType: contentType,
 				XhrResponseType: this.request.responseType,
 			},
@@ -519,12 +528,13 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	private onReadyStateChange = async (event: Event): Promise<unknown> => {
 		const { readyState, status } = this.request
 
+		this.log({ event: `readystatechange`, readyState, status: this.request.status, data: event })
+
 		if (this.autoResponseType && readyState === XMLHttpRequest.HEADERS_RECEIVED) {
 			this.setResponseTypeFromResponseHeaders()
 		}
 
 		this.emit('readystatechange', event, this)
-		this.log({ event: `readystatechange`, readyState, status: this.request.status, data: event })
 
 		if (readyState !== XMLHttpRequest.DONE) {
 			return this.emitReadyStateEvent({ readyState, event })

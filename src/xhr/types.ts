@@ -139,10 +139,10 @@ export namespace XHR {
 
 	export interface UploadOptions extends Omit<XHR.Options, 'body'> {
 		/**
-		 * The HTMLInputElement `FileList` to upload.
+		 * The HTMLInputElement `FileList` or an array of `File` to upload.
 		 *
 		 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/files)
 		 */
-		files: FileList | null
+		files: File[] | FileList
 	}
 }
