@@ -10,6 +10,9 @@ export class XMLHttpRequest extends EventEmitter {
 	public readyState: number
 	public responseURL: string
 	public status: number
+	public timeout: number | undefined
+	public withCredentials: boolean | undefined
+
 	private isAborted: boolean
 	private locked: boolean
 
@@ -129,7 +132,5 @@ export class XMLHttpRequest extends EventEmitter {
 	public responseXML = vi.fn()
 	public setRequestHeader = vi.fn()
 	public statusText = vi.fn()
-	public timeout = vi.fn()
 	public upload = vi.fn()
-	public withCredentials = vi.fn()
 }

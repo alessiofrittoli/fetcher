@@ -112,6 +112,42 @@ describe('Xhr - client', () => {
 
 			expect(xhr.controller).not.toBe(controller)
 		})
+
+		it('initializes the XMLHttpRequest with the given credentials', () => {
+			xhr['init']({ url, credentials: { username: 'username', password: 'password' } })
+
+			expect(mockXMLHttpRequest.open).toHaveBeenCalledExactlyOnceWith(
+				'GET',
+				url,
+				true,
+				'username',
+				'password',
+			)
+		})
+
+		it('sets `timeout` to XMLHttpRequest with the given value', () => {
+			expect(mockXMLHttpRequest.timeout).toBeUndefined()
+
+			xhr['init']({ url, timeout: 5000 })
+
+			expect(mockXMLHttpRequest.timeout).toBe(5000)
+		})
+
+		it('sets `withCredentials` to XMLHttpRequest with the given value', () => {
+			expect(mockXMLHttpRequest.withCredentials).toBeUndefined()
+
+			xhr['init']({ url, withCredentials: true })
+
+			expect(mockXMLHttpRequest.withCredentials).toBe(true)
+		})
+
+		it('sets a newly generated request UUID', () => {
+			xhr['init']({ url })
+			const { requestId } = xhr
+			expect(requestId).toBeDefined()
+			xhr['init']({ url })
+			expect(requestId).not.toBe(xhr.requestId)
+		})
 	})
 
 	describe('Xhr.send()', () => {
