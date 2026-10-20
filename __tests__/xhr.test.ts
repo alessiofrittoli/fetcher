@@ -64,7 +64,21 @@ describe('Xhr - client', () => {
 	})
 
 	describe('constructor', () => {
-		it('saves global preferences for future usage', { todo: true })
+		it('saves global preferences for future usage', () => {
+			const xhr = new Xhr({
+				autoResponseType: true,
+				credentials: { username: 'username', password: 'password' },
+				debug: true,
+				timeout: 5000,
+				withCredentials: true,
+			})
+
+			expect(xhr['autoResponseType']).toBe(true)
+			expect(xhr.credentials).toEqual({ username: 'username', password: 'password' })
+			expect(xhr.debug).toBe(true)
+			expect(xhr.timeout).toBe(5000)
+			expect(xhr.withCredentials).toBe(true)
+		})
 	})
 
 	describe('Xhr.init()', () => {
@@ -148,6 +162,24 @@ describe('Xhr - client', () => {
 			xhr['init']({ url })
 			expect(requestId).not.toBe(xhr.requestId)
 		})
+
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr['init']({ url })).toThrow(xhr['getXhrNotAvailableError']())
+		})
+	})
+
+	describe('Xhr.setRequestHeaders()', () => {
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.setRequestHeaders({})).toThrow(xhr['getXhrNotAvailableError']())
+		})
 	})
 
 	describe('Xhr.send()', () => {
@@ -200,7 +232,13 @@ describe('Xhr - client', () => {
 			)
 		})
 
-		// it( '' )
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.send({ url })).toThrow(xhr['getXhrNotAvailableError']())
+		})
 	})
 
 	describe('Xhr.upload()', () => {
@@ -218,6 +256,14 @@ describe('Xhr - client', () => {
 			expect(file1Name).toBe(files.at(0)?.name)
 			expect(file2Name).toBe(files.at(1)?.name)
 		})
+
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.upload({ url, files: [] })).toThrow(xhr['getXhrNotAvailableError']())
+		})
 	})
 
 	describe('Xhr.abort()', () => {
@@ -229,6 +275,24 @@ describe('Xhr - client', () => {
 			xhr.send({ url })
 
 			expect(mockXMLHttpRequest.abort).toHaveBeenCalled()
+		})
+
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.abort()).toThrow(xhr['getXhrNotAvailableError']())
+		})
+	})
+
+	describe('Xhr.getResponse()', () => {
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.getResponse()).toThrow(xhr['getXhrNotAvailableError']())
 		})
 	})
 

@@ -296,7 +296,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 		const body = new FormData()
 
-		;(files ? Array.from(files) : []).forEach(file => {
+		Array.from(files).forEach(file => {
 			body.append(file.name, file, file.name)
 		})
 
@@ -420,10 +420,16 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 		return this as Xhr<T>
 	}
 
+	/**
+	 * Get XMLHttpRequest not available error.
+	 *
+	 * @returns The newly created error with `ErrorCode.XHR_NOT_AVAILABLE` code.
+	 */
 	private getXhrNotAvailableError(): Exception<ErrorCode> {
 		return new Exception({
-			message: 'XMLHttpRequest not available',
+			message: 'XMLHttpRequest not available.',
 			code: ErrorCode.XHR_NOT_AVAILABLE,
+			isCritical: true,
 		})
 	}
 
