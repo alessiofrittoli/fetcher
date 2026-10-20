@@ -68,9 +68,50 @@ describe('Xhr - client', () => {
 	})
 
 	describe('Xhr.init()', () => {
-		it('uses the given AbortController', { todo: true })
-		it('creates a new AbortController if no one is given', { todo: true })
-		it('creates a new AbortController if the given one is already aborted', { todo: true })
+		it('creates a new AbortController if no one is given', () => {
+			xhr['init']({ url })
+
+			expect(xhr.controller).toBeInstanceOf(AbortController)
+
+			const abort = xhr.controller && vi.spyOn(xhr.controller, 'abort')
+
+			xhr.abort('Testing abort.', { code: ErrorCode.TOO_MANY })
+
+			expect(abort).toHaveBeenCalledExactlyOnceWith('Testing abort.', { code: ErrorCode.TOO_MANY })
+		})
+
+		it('uses the given AbortController', () => {
+			const controller = new AbortController()
+
+			const signalAddEventListener = vi.spyOn(controller.signal, 'addEventListener')
+			const abort = vi.spyOn(controller, 'abort')
+
+			xhr['init']({ url, controller })
+			xhr.abort('Testing abort.', { code: ErrorCode.TOO_MANY })
+
+			expect(signalAddEventListener).toHaveBeenCalledExactlyOnceWith('abort', expect.any(Function))
+
+			expect(abort).toHaveBeenCalledExactlyOnceWith('Testing abort.', { code: ErrorCode.TOO_MANY })
+		})
+
+		it('creates a new AbortController if the previous one is aborted', () => {
+			xhr['init']({ url })
+			const oldController = xhr.controller
+			xhr.abort('Testing abort.', { code: ErrorCode.TOO_MANY })
+
+			xhr['init']({ url })
+
+			expect(xhr.controller).not.toBe(oldController)
+		})
+
+		it('creates a new AbortController if the given one is aborted', () => {
+			const controller = new AbortController()
+			controller.abort()
+
+			xhr['init']({ url, controller })
+
+			expect(xhr.controller).not.toBe(controller)
+		})
 	})
 
 	describe('Xhr.send()', () => {
@@ -122,6 +163,8 @@ describe('Xhr - client', () => {
 				}),
 			)
 		})
+
+		// it( '' )
 	})
 
 	describe('Xhr.upload()', () => {
@@ -155,5 +198,30 @@ describe('Xhr - client', () => {
 
 	describe('Xhr.destroy()', () => {
 		it('aborts any network activity and remove event listeners', { todo: true })
+	})
+
+	describe('Xhr.error()', () => {
+		it('throws the given error if there is no listener attached to the error event', () => {
+			const error = new Exception({
+				message: 'Thrown error',
+				code: ErrorCode.XHR_NOT_AVAILABLE,
+			})
+
+			expect(() => xhr['error'](error)).toThrow(error)
+		})
+
+		it('emits an error event if there are listeners attached to the error event', () => {
+			const error = new Exception({
+				message: 'Thrown error',
+				code: ErrorCode.XHR_NOT_AVAILABLE,
+			})
+
+			const onError = vi.fn()
+
+			xhr.on('error', onError)
+
+			expect(() => xhr['error'](error)).not.toThrow()
+			expect(onError).toHaveBeenCalledExactlyOnceWith(error, xhr)
+		})
 	})
 })
