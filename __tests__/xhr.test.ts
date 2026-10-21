@@ -163,6 +163,12 @@ describe('Xhr - client', () => {
 			expect(requestId).not.toBe(xhr.requestId)
 		})
 
+		it('sets custom request headers', () => {
+			xhr['init']({ url, headers: { Authorization: 'Bearer token' } })
+
+			expect(mockXMLHttpRequest.setRequestHeader).toHaveBeenCalledWith('authorization', 'Bearer token')
+		})
+
 		it('throws a new Exception if XMLHttpRequest is not available', () => {
 			vi.stubGlobal('XMLHttpRequest', undefined)
 
@@ -180,6 +186,42 @@ describe('Xhr - client', () => {
 
 			expect(() => xhr.setRequestHeaders({})).toThrow(xhr['getXhrNotAvailableError']())
 		})
+
+		it('sets the given headers to the XMLHttpRequest', () => {
+			xhr.setRequestHeaders(
+				new Headers({
+					Authorization: 'Bearer token',
+					'Content-Type': 'application/json',
+				}),
+			)
+
+			expect(mockXMLHttpRequest.setRequestHeader).toHaveBeenNthCalledWith(
+				1,
+				'authorization',
+				'Bearer token',
+			)
+
+			expect(mockXMLHttpRequest.setRequestHeader).toHaveBeenNthCalledWith(
+				2,
+				'content-type',
+				'application/json',
+			)
+		})
+	})
+
+	describe('Xhr.getResponseHeader()', () => {
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() => xhr.getResponseHeader('Content-Type')).toThrow(xhr['getXhrNotAvailableError']())
+		})
+
+		it('gets response headers with the given key', () => {
+			xhr.getResponseHeader('Content-Type')
+			expect(mockXMLHttpRequest.getResponseHeader).toHaveBeenCalledWith('Content-Type')
+		})
 	})
 
 	describe('Xhr.send()', () => {
@@ -195,22 +237,6 @@ describe('Xhr - client', () => {
 			xhr.send({ url })
 			expect(mockXMLHttpRequest.send).toHaveBeenCalled()
 		})
-
-		// it('wraps the XMLHttpRequest.send() in a setTimeout so chained methods can immediately attach event listeners', async () => {
-		// 	const setTimeout = vi.spyOn(global, 'setTimeout')
-		// 	const onLoadStart = vi.fn()
-
-		// 	// restore `xhr.send()` method original implementation so we can test the `.once()` event listener attached to it.
-		// 	mockXhrSend.mockReset()
-
-		// 	xhr.send({ url }).once('loadstart', onLoadStart)
-
-		// 	expect(setTimeout).toHaveBeenCalledExactlyOnceWith(expect.any(Function))
-
-		// 	vi.advanceTimersToNextFrame()
-
-		// 	expect(onLoadStart).toHaveBeenCalledOnce()
-		// })
 
 		it('handles InvalidStateError on subsequent calls when request is not done', async () => {
 			xhr.send({ url })
@@ -322,6 +348,135 @@ describe('Xhr - client', () => {
 
 			expect(() => xhr['error'](error)).not.toThrow()
 			expect(onError).toHaveBeenCalledExactlyOnceWith(error, xhr)
+		})
+	})
+
+	describe('Xhr ReadyState change events', () => {
+		const tests: [XHR.Event.ReadyStateChange, number][] = [
+			['headers', 2],
+			['loading', 3],
+			['done', 4],
+		]
+
+		it.each(tests)('emits "%s" event on readyState code "%s"', async event => {
+			const eventHandler = vi.fn()
+			xhr.once(event, eventHandler)
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(eventHandler).toHaveBeenCalled()
+		})
+
+		it('emits "success" event with server response', async () => {
+			const onSuccess = vi.fn()
+
+			xhr.on('success', onSuccess)
+
+			const responseStatus = 200
+
+			const responseBody = {
+				message: 'Server success response message.',
+			}
+
+			mockXMLHttpRequest.getMockResponse.mockReturnValue({
+				body: responseBody,
+				headers: new Headers({ 'Content-Type': 'application/json' }),
+				status: responseStatus,
+			})
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(onSuccess).toHaveBeenCalledWith(responseBody, xhr)
+		})
+
+		it.each([
+			['text', undefined, 'no Content-Type'],
+			['text', 'text/plain', 'Content-Type: text/plain'],
+			['document', 'text/html', 'Content-Type: text/html'],
+			['document', 'application/xml', 'Content-Type: application/xml'],
+			['json', 'application/json', 'Content-Type: application/json'],
+			['blob', 'image/png', 'Content-Type: image/*'],
+			['blob', 'video/mp4', 'Content-Type: video/*'],
+			['arraybuffer', 'application/x-bzip', 'an unhandled Content-Type'],
+		])(
+			'automatically sets the `responseType` to "$0" when $2 header is received',
+			async (responseType, header, _condition) => {
+				mockXMLHttpRequest.getMockResponse.mockReturnValue({
+					body: {
+						message: 'Server success response message.',
+					},
+					headers: header ? new Headers({ 'Content-Type': header }) : undefined,
+					status: 200,
+				})
+
+				await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+				expect(xhr.request.responseType).toBe(responseType)
+			},
+		)
+
+		it("doesn't automatically determine the response type if given", async () => {
+			await new Promise(resolve => xhr.send({ url, responseType: 'arraybuffer' }).once('done', resolve))
+
+			expect(xhr['autoResponseType']).toBe(false)
+			expect(xhr.request.responseType).toBe('arraybuffer')
+		})
+
+		it('emits "done" and "error" events on bad HTTP status', async () => {
+			const onDone = vi.fn()
+			const onError = vi.fn()
+
+			xhr.once('done', onDone)
+			xhr.on('error', onError)
+
+			const responseBody = {
+				message: 'Server Response error message.',
+			}
+			const responseStatus = 400
+
+			mockXMLHttpRequest.getMockResponse.mockReturnValue({
+				body: responseBody,
+				headers: new Headers({ 'Content-Type': 'application/json' }),
+				status: responseStatus,
+			})
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(onDone).toHaveBeenCalled()
+			expect(onError).toHaveBeenCalledWith(
+				new Exception({
+					message: 'Error from the server.',
+					code: ErrorCode.UNKNOWN,
+					status: responseStatus,
+					cause: responseBody,
+					isCritical: true,
+				}),
+				xhr,
+			)
+		})
+
+		it('"error" events with the error returned by the server', async () => {
+			const onError = vi.fn()
+
+			xhr.on('error', onError)
+
+			const responseStatus = 429
+
+			const responseBody = new Exception({
+				message: 'The error message returned by the server.',
+				code: ErrorCode.TOO_MANY,
+				status: responseStatus,
+			})
+
+			mockXMLHttpRequest.getMockResponse.mockReturnValue({
+				body: responseBody,
+				headers: new Headers({ 'Content-Type': 'application/json' }),
+				status: responseStatus,
+			})
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(onError).toHaveBeenCalledWith(responseBody, xhr)
 		})
 	})
 })

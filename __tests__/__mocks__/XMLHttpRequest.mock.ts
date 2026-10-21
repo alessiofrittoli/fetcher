@@ -12,6 +12,7 @@ export class XMLHttpRequest extends EventEmitter {
 	public status: number
 	public timeout: number | undefined
 	public withCredentials: boolean | undefined
+	public response?: unknown
 
 	private isAborted: boolean
 	private locked: boolean
@@ -72,6 +73,12 @@ export class XMLHttpRequest extends EventEmitter {
 			await step1
 
 			if (!this.isAborted) {
+				const { body, headers, status } = this.getMockResponse()
+
+				this.status = status
+				this.getResponseHeader.mockImplementation(key => headers?.get(key))
+				this.response = body
+
 				this.readyState = XMLHttpRequest.HEADERS_RECEIVED
 				this.dispatchEvent(new Event('readystatechange'))
 				// simulate server response timings
@@ -121,12 +128,25 @@ export class XMLHttpRequest extends EventEmitter {
 		this.emit(event.type, event)
 	})
 
+	public getMockResponse = vi.fn<
+		() => {
+			body: unknown
+			headers?: Headers
+			status: number
+		}
+	>(() => ({
+		body: {
+			message: 'Server Response message.',
+		},
+		headers: new Headers({ 'Content-Type': 'application/json' }),
+		status: 200,
+	}))
+
 	public error = vi.fn()
 	public getResponseHeader = vi.fn()
 	public getAllResponseHeaders = vi.fn()
 	public onreadystatechange = vi.fn()
 	public progress = vi.fn()
-	public response = vi.fn()
 	public responseText = vi.fn()
 	public responseType = vi.fn()
 	public responseXML = vi.fn()

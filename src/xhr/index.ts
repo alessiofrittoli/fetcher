@@ -279,9 +279,6 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 				}),
 			)
 		}
-		// setTimeout(async () => {
-		// })
-		// return this as Xhr<T>
 	}
 
 	/**
@@ -360,7 +357,12 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	 * @param	name The Header name.
 	 * @returns	The Response Header value, `null` if none has been found.
 	 */
-	public getResponseHeader(name: string): string | null {
+	public getResponseHeader<T = TReturn>(name: string): string | null {
+		if (!this.request) {
+			this.error<T>(this.getXhrNotAvailableError())
+			return null
+		}
+
 		return this.request.getResponseHeader(name)
 	}
 
@@ -490,27 +492,25 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	private contentTypeToResponseType(
 		contentType: string | null = this.getResponseContentType(),
 	): XMLHttpRequestResponseType {
-		if (!contentType) return ''
+		const _contentType = contentType?.toLowerCase() || false
 
-		contentType = contentType.toLowerCase()
+		if (!_contentType || _contentType.includes('text/plain')) {
+			return 'text'
+		}
 
-		if (contentType.includes('text/html') || contentType.includes('application/xml')) {
+		if (_contentType.includes('text/html') || _contentType.includes('application/xml')) {
 			return 'document'
 		}
 
-		if (contentType.includes('application/json')) {
+		if (_contentType.includes('application/json')) {
 			return 'json'
 		}
 
-		if (contentType.includes('application/octet-stream')) {
-			return 'arraybuffer'
-		}
-
-		if (contentType.startsWith('image/') || contentType.startsWith('video/')) {
+		if (_contentType.startsWith('image/') || _contentType.startsWith('video/')) {
 			return 'blob'
 		}
 
-		return 'text'
+		return 'arraybuffer'
 	}
 
 	/**
@@ -554,48 +554,34 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 			return this.emitReadyStateEvent({ readyState, event })
 		}
 
-		try {
-			const response = this.getResponse()
+		const response = this.getResponse()
 
-			if (status < 100 || status >= 400) {
-				const { responseType } = this.request
+		if (status < 100 || status >= 400) {
+			const { responseType } = this.request
 
-				const { getErrorFromResponse } = await import('./getErrorFromResponse')
-				const error = await getErrorFromResponse({ response, responseType })
+			const { getErrorFromResponse } = await import('./getErrorFromResponse')
+			const error = await getErrorFromResponse({ response, responseType })
 
-				this.emitReadyStateEvent({ readyState, event })
+			this.emitReadyStateEvent({ readyState, event })
 
-				if (error) {
-					return this.error(error)
-				}
-
-				return this.error(
-					new Exception({
-						message: 'Error from the server.',
-						code: ErrorCode.UNKNOWN,
-						status: status,
-						cause: response,
-					}),
-				)
+			if (error) {
+				return this.error(error)
 			}
 
-			this.emitReadyStateEvent({ readyState, event })
-
-			return this.success(response)
-		} catch (err) {
-			const cause = err as Error
-
-			const code =
-				cause.name === ExceptionName.InvalidStateError
-					? ErrorCode.XHR_INVALID_STATE
-					: ErrorCode.UNKNOWN
-
-			this.emitReadyStateEvent({ readyState, event })
-
 			return this.error(
-				new Exception({ ...cause, name: cause.name, message: cause.message, code, cause }),
+				new Exception({
+					message: 'Error from the server.',
+					code: ErrorCode.UNKNOWN,
+					status: status,
+					cause: response,
+					isCritical: true,
+				}),
 			)
 		}
+
+		this.emitReadyStateEvent({ readyState, event })
+
+		return this.success(response)
 	}
 
 	/**
@@ -625,6 +611,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 					message: 'ProgressEvent Error',
 					code: ErrorCode.UNKNOWN,
 					cause: event,
+					isCritical: true,
 				}),
 			)
 		}
