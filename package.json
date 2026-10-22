@@ -1,6 +1,6 @@
 {
 	"name": "@alessiofrittoli/fetcher",
-	"version": "1.1.0",
+	"version": "2.0.0",
 	"description": "Typescript fetch/xhr utilities",
 	"type": "module",
 	"author": {
@@ -17,7 +17,8 @@
 	],
 	"keywords": [
 		"fetch",
-		"ajax",
+		"xhr",
+		"XMLHttpRequest",
 		"ping"
 	],
 	"homepage": "https://github.com/alessiofrittoli/fetcher#readme",
@@ -91,6 +92,7 @@
 	"peerDependencies": {
 		"@alessiofrittoli/abort-controller": "^1.0.0",
 		"@alessiofrittoli/chain-functions": "^2.7.0",
+		"@alessiofrittoli/crypto-buffer": "^3.11.0",
 		"@alessiofrittoli/event-emitter": "^1.7.0",
 		"@alessiofrittoli/exception": "^4.1.1",
 		"@alessiofrittoli/math-utils": "^2.1.0",
@@ -115,12 +117,12 @@
 		"@vitest/coverage-v8": "^5.0.5",
 		"concurrently": "^10.0.6",
 		"http-server": "^14.1.1",
-		"oxlint": "^1.88.0",
+		"oxlint": "^1.89.0",
 		"prettier": "^3.9.10",
 		"prettier-plugin-sort-imports": "^1.8.11",
 		"tsdown": "^0.23.1",
 		"typescript": "^6.0.3",
-		"vite": "^8.3.4",
+		"vite": "^8.3.5",
 		"vitest": "^5.0.5"
 	}
 }
