@@ -92,6 +92,10 @@ export class XMLHttpRequest extends EventEmitter {
 				await step3
 			}
 
+			if (this.status !== 0 && (this.status < 200 || this.status >= 400)) {
+				this.dispatchEvent(new ProgressEvent('error'))
+			}
+
 			this.readyState = XMLHttpRequest.DONE
 			this.dispatchEvent(new Event('readystatechange'))
 

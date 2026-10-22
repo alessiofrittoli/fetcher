@@ -3,7 +3,8 @@
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { Exception, ExceptionName } from '@alessiofrittoli/exception'
-import { XMLHttpRequest } from './__mocks__/XMLHttpRequest.mock'
+import { XMLHttpRequest } from '../__mocks__/XMLHttpRequest.mock'
+import { AbortError } from '@alessiofrittoli/exception/abort'
 import { ErrorCode } from '@/error'
 import type { XHR } from '@/types'
 import { Xhr } from '@/xhr'
@@ -78,6 +79,22 @@ describe('Xhr - client', () => {
 			expect(xhr.debug).toBe(true)
 			expect(xhr.timeout).toBe(5000)
 			expect(xhr.withCredentials).toBe(true)
+		})
+
+		it('provides timeout, credentials and withCredentials setters', () => {
+			xhr['timeout'] = 20
+			xhr['withCredentials'] = true
+			xhr['credentials'] = {
+				username: 'username',
+				password: 'password',
+			}
+
+			expect(xhr.timeout).toBe(20)
+			expect(xhr.withCredentials).toBe(true)
+			expect(xhr.credentials).toEqual({
+				username: 'username',
+				password: 'password',
+			})
 		})
 	})
 
@@ -351,6 +368,41 @@ describe('Xhr - client', () => {
 		})
 	})
 
+	describe('Xhr.log()', () => {
+		it("doesn't print out infos if debug has been set to false", () => {
+			const logSpy = vi.spyOn(console, 'log')
+
+			xhr.log('Data')
+
+			expect(logSpy).not.toHaveBeenCalled()
+		})
+
+		it('prints out given infos if debug has been set to true', () => {
+			const xhr = new Xhr({ debug: true })
+			const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+			xhr.log('Data')
+
+			expect(logSpy).toHaveBeenCalled()
+		})
+	})
+
+	describe.each([
+		['Xhr.registerListeners()', 'registerListeners'],
+		['Xhr.unregisterListeners()', 'unregisterListeners'],
+	])('$0', (_, method) => {
+		it('throws a new Exception if XMLHttpRequest is not available', () => {
+			vi.stubGlobal('XMLHttpRequest', undefined)
+
+			const xhr = new Xhr()
+
+			expect(() =>
+				// @ts-expect-error accessing a private method with dynamic value
+				xhr[method](),
+			).toThrow(xhr['getXhrNotAvailableError']())
+		})
+	})
+
 	describe('Xhr ReadyState change events', () => {
 		const tests: [XHR.Event.ReadyStateChange, number][] = [
 			['headers', 2],
@@ -477,6 +529,57 @@ describe('Xhr - client', () => {
 			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
 
 			expect(onError).toHaveBeenCalledWith(responseBody, xhr)
+		})
+	})
+
+	describe('Xhr progress events', () => {
+		it('emits "abort" event when "abort" progress event is received', async () => {
+			const onAbort = vi.fn()
+
+			xhr.once('loadstart', () => {
+				xhr.abort('Abort reason.')
+			}).once('abort', onAbort)
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(onAbort).toHaveBeenCalledWith(expect.any(AbortError), new ProgressEvent('abort'), xhr)
+		})
+
+		it('creates a new AbortError on abort if the current AbortController is lost for some reason', async () => {
+			const controller = new AbortController()
+
+			const onAbort = vi.fn()
+
+			xhr.once('loadstart', () => {
+				controller.abort()
+			}).once('abort', onAbort)
+
+			await new Promise(resolve => {
+				xhr.send({ url, controller }).once('done', resolve)
+				// @ts-expect-error negative testing
+				xhr.controller = undefined
+			})
+
+			expect(onAbort).toHaveBeenCalledWith(
+				new AbortError({ message: 'signal is aborted without reason', code: ErrorCode.ABORT }),
+				new ProgressEvent('abort'),
+				xhr,
+			)
+		})
+
+		it('emits an "error" event when an "error" progress event is received', async () => {
+			const onError = vi.fn()
+
+			xhr.on('error', onError)
+
+			mockXMLHttpRequest.getMockResponse.mockReturnValue({
+				body: null,
+				status: 400,
+			})
+
+			await new Promise(resolve => xhr.send({ url }).once('done', resolve))
+
+			expect(onError).toHaveBeenCalled()
 		})
 	})
 })

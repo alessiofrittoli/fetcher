@@ -600,7 +600,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 		if (type === 'abort') {
 			const abortReason =
 				this.controller?.signal.reason ||
-				new AbortError({ message: 'The operation was aborted.', code: ErrorCode.ABORT })
+				new AbortError({ message: 'signal is aborted without reason', code: ErrorCode.ABORT })
 
 			return this.emit('abort', abortReason, event, this)
 		}
