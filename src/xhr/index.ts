@@ -270,6 +270,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 
 			return this.error<T>(
 				new Exception({
+					// oxlint-disable-next-line typescript/no-misused-spread
 					...cause,
 					name: cause.name,
 					message: cause.message,
@@ -579,9 +580,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 			)
 		}
 
-		this.emitReadyStateEvent({ readyState, event })
-
-		return this.success(response)
+		return this.emitReadyStateEvent({ readyState, event }).success(response)
 	}
 
 	/**
@@ -665,6 +664,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 		}
 
 		this.log({ method: '.registerListeners()' }, 'Register "readystatechange" event listener.')
+		// oxlint-disable-next-line typescript/no-misused-promises
 		this.request.addEventListener('readystatechange', this.onReadyStateChange)
 
 		Xhr.ProgressEvents.map(event => {
@@ -694,6 +694,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 		this.listenersRegistered = false
 
 		this.log({ method: '.unregisterListeners()' }, 'Unregister "readystatechange" event listener.')
+		// oxlint-disable-next-line typescript/no-misused-promises
 		this.request.removeEventListener('readystatechange', this.onReadyStateChange)
 
 		Xhr.ProgressEvents.map(event => {

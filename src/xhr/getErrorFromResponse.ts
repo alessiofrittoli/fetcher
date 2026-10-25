@@ -1,6 +1,21 @@
 import { binaryToString } from '@alessiofrittoli/crypto-buffer'
 import { Exception } from '@alessiofrittoli/exception'
-import { isJson } from '@alessiofrittoli/web-utils'
+
+/**
+ * Check if string is a valid JSON object.
+ *
+ * @param	string
+ *
+ * @returns	boolean
+ */
+export const isJson = (string: unknown): string is string => {
+	try {
+		JSON.parse(string as string)
+		return true
+	} catch {
+		return false
+	}
+}
 
 interface GetErrorFromResponseOptions {
 	/**
