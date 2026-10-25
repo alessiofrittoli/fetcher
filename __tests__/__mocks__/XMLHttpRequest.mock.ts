@@ -112,6 +112,7 @@ export class XMLHttpRequest extends EventEmitter {
 			this.readyState = XMLHttpRequest.UNSENT
 		}
 
+		// oxlint-disable-next-line typescript/no-floating-promises
 		emitEvents()
 	})
 

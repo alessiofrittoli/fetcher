@@ -43,6 +43,7 @@ describe('Xhr - client', () => {
 
 		xhr = new Xhr()
 
+		// oxlint-disable-next-line typescript/unbound-method
 		const originalSend = xhr.send
 
 		mockXhrSend = vi.spyOn(xhr, 'send')
@@ -265,6 +266,7 @@ describe('Xhr - client', () => {
 
 			expect(() => xhr.send({ url })).toThrow(
 				new Exception({
+					// oxlint-disable-next-line typescript/no-misused-spread
 					...cause,
 					name: cause.name,
 					message: cause.message,

@@ -13,4 +13,5 @@ const lastChainLink = () => () => {
 /** @type {import( '@alessiofrittoli/chain-functions/types' ).ChainFactory<() => void | Promise<void>>} */
 const chain = [tsSetup, lastChainLink]
 
+// oxlint-disable-next-line typescript/no-floating-promises
 Chain.functions(chain)()
