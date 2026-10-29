@@ -373,12 +373,17 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 	 * @returns The current `Xhr` instance for chaining purposes.
 	 */
 	public destroy<T = TReturn>(): Xhr<T> {
-		return this.log<T>({ message: 'Xhr destroyed.' })
-			.abort<ErrorCode, T>('Xhr has been destroyed.', {
+		this.log<T>({ message: 'Xhr destroyed.' })
+
+		const { readyState } = this.request
+
+		if (readyState !== XMLHttpRequest.DONE && readyState !== XMLHttpRequest.UNSENT) {
+			this.abort<ErrorCode, T>('Xhr has been destroyed.', {
 				code: ErrorCode.XHR_DESTROYED,
 			})
-			.unregisterListeners<T>()
-			.removeAllListeners()
+		}
+
+		return this.unregisterListeners<T>().removeAllListeners()
 	}
 
 	/**
