@@ -1,5 +1,5 @@
-import type { Listener as EventEmitterListener } from '@alessiofrittoli/event-emitter'
 import type { AbortController } from '@alessiofrittoli/abort-controller'
+import type * as EventEmitter from '@alessiofrittoli/event-emitter'
 import type { AbortError } from '@alessiofrittoli/exception/abort'
 import type { Exception } from '@alessiofrittoli/exception'
 import type { UrlInput } from '@alessiofrittoli/url-utils'
@@ -59,7 +59,7 @@ export namespace XHR {
 		export type Listener<
 			TEvent extends keyof XHR.Event.Map<TReturn>,
 			TReturn = unknown,
-		> = EventEmitterListener<XHR.Event.Map<TReturn>, TEvent>
+		> = EventEmitter.Listener<XHR.Event.Map<TReturn>, TEvent>
 	}
 
 	export interface ConstructOptions {
