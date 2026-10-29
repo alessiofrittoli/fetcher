@@ -56,7 +56,6 @@ describe('Xhr - client', () => {
 	})
 
 	afterEach(() => {
-		xhr.destroy()
 		mockXMLHttpRequest.removeAllListeners()
 		vi.clearAllTimers()
 	})
