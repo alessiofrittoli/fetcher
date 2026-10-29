@@ -580,7 +580,7 @@ export class Xhr<TReturn = unknown> extends EventEmitter<XHR.Event.Map<TReturn>>
 			)
 		}
 
-		return this.emitReadyStateEvent({ readyState, event }).success(response)
+		return this.success(response).emitReadyStateEvent({ readyState, event })
 	}
 
 	/**
